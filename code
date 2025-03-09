@@ -1,0 +1,120 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+
+public class DataVisualization extends JFrame {
+    private JTextField itemNameField, amountField;
+    private JTable dataTable;
+    private DefaultTableModel tableModel;
+    private JPanel chartPanel;
+
+    public DataVisualization() {
+        // Set up the main frame
+        setTitle("Data Visualization");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // Top panel for input
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+        itemNameField = new JTextField();
+        amountField = new JTextField();
+        inputPanel.add(new JLabel("Item Name:"));
+        inputPanel.add(itemNameField);
+        inputPanel.add(new JLabel("Amount:"));
+        inputPanel.add(amountField);
+        JButton addButton = new JButton("Add Data");
+        inputPanel.add(addButton);
+        add(inputPanel, BorderLayout.NORTH);
+
+        // Table for data
+        tableModel = new DefaultTableModel(new Object[]{"Item", "Amount"}, 0);
+        dataTable = new JTable(tableModel);
+        add(new JScrollPane(dataTable), BorderLayout.CENTER);
+
+        // Bottom panel for buttons
+        JPanel buttonPanel = new JPanel();
+        JButton pieChartButton = new JButton("Pie Chart");
+        JButton resetButton = new JButton("Reset");
+        buttonPanel.add(pieChartButton);
+        buttonPanel.add(resetButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Panel for chart
+        chartPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                drawPieChart(g);
+            }
+        };
+        chartPanel.setPreferredSize(new Dimension(400, 400));
+        add(chartPanel, BorderLayout.EAST);
+
+        // Action listeners
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String itemName = itemNameField.getText();
+                String amount = amountField.getText();
+                if (!itemName.isEmpty() && !amount.isEmpty()) {
+                    tableModel.addRow(new Object[]{itemName, Integer.parseInt(amount)});
+                }
+            }
+        });
+
+        resetButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                tableModel.setRowCount(0); // Clear the table
+                chartPanel.repaint(); // Clear the pie chart
+            }
+        });
+
+        pieChartButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                chartPanel.repaint(); // Repaint to display the pie chart
+            }
+        });
+    }
+
+    private void drawPieChart(Graphics g) {
+        int total = 0;
+        ArrayList<Integer> amounts = new ArrayList<>();
+        ArrayList<String> items = new ArrayList<>();
+
+        // Calculate total amount
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            int amount = (int) tableModel.getValueAt(i, 1);
+            total += amount;
+            amounts.add(amount);
+            items.add((String) tableModel.getValueAt(i, 0));
+        }
+
+        // Calculate angles for each item
+        int startAngle = 0;
+        for (int i = 0; i < amounts.size(); i++) {
+            int angle = (int) (360.0 * amounts.get(i) / total);
+            g.setColor(getColor(i));
+            g.fillArc(50, 50, 300, 300, startAngle, angle);
+            g.setColor(Color.BLACK);
+            g.drawString(items.get(i) + " (" + amounts.get(i) + ")", 370, 50 + i * 20);
+            startAngle += angle;
+        }
+    }
+
+    private Color getColor(int index) {
+        Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.ORANGE, Color.CYAN, Color.MAGENTA};
+        return colors[index % colors.length];
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new DataVisualization().setVisible(true);
+        });
+    }
+}
